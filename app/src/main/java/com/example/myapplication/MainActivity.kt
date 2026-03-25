@@ -14,6 +14,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -47,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Size
 import kotlinx.coroutines.launch
@@ -191,7 +193,11 @@ fun MySettingsIcon(filled: Boolean) {
 
 @Composable
 fun MyHomePage() {
-    Column {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         MyVisualizer()
         MyPlayButton()
     }
@@ -257,19 +263,23 @@ fun MyPlayButton() {
             isMusicPlaying = !isMusicPlaying
         },
     ) {
-        MyPlayIcon(isMusicPlaying)
+        MyPlayIcon()
     }
 }
 
 @Composable
-fun MyPlayIcon(isPlaying: Boolean) {
+fun MyPlayIcon() {
     Icon(
-        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+        imageVector = if (isMusicPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
         contentDescription = "Play"
     )
 }
 
 @Composable
 fun MySettingsPage() {
-    Text("Settings page")
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text("Settings page")
+    }
 }
