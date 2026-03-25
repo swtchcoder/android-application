@@ -241,7 +241,7 @@ fun MyVisualizer() {
     }
     Surface(
         modifier = Modifier
-            .size(100.dp)
+            .size(200.dp)
             .rotate(rotation),
         shape = shape,
         color = MaterialTheme.colorScheme.primaryContainer
@@ -251,6 +251,7 @@ fun MyVisualizer() {
 @Composable
 fun MyPlayButton() {
     Button(
+        modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
         onClick = {
             if (!isMusicReady) {
                 return@Button
