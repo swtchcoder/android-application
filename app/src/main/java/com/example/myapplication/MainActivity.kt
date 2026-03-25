@@ -1,6 +1,9 @@
 package com.example.myapplication
 
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +24,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
@@ -31,9 +37,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.MyApplicationTheme
 
+var mediaPlayer: MediaPlayer? = null
+var mediaPlayerPrepared by mutableStateOf(false)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val url = "https://stream.hardcoreradio.nl:9000/hcr.ogg"
+        mediaPlayer = MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+            setDataSource(url)
+            setOnPreparedListener {
+                mediaPlayerPrepared = true
+                it.start()
+            }
+            setOnErrorListener { _, _, _ ->
+                mediaPlayerPrepared = false
+                Toast.makeText(this@MainActivity, "Stream error", Toast.LENGTH_LONG).show()
+                true
+            }
+            prepareAsync()
+        }
+
         enableEdgeToEdge()
         setContent {
             val pagerState = rememberPagerState(pageCount = { 2 })
@@ -66,6 +97,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        mediaPlayer?.release()
+        mediaPlayer = null
+        super.onDestroy()
     }
 }
 
@@ -127,7 +164,11 @@ fun MySettingsIcon(filled: Boolean) {
 
 @Composable
 fun MyHomePage() {
-    Text("Home page")
+    if (mediaPlayerPrepared) {
+        Text("Playing stream")
+    } else {
+        Text("Preparing stream")
+    }
 }
 
 @Composable
