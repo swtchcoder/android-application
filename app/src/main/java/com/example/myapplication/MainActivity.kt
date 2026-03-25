@@ -14,6 +14,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,9 +22,12 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -38,9 +42,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.toPath
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Size
 import kotlinx.coroutines.launch
@@ -58,6 +64,7 @@ import androidx.graphics.shapes.Morph
 import com.example.myapplication.ui.theme.MyApplicationTheme
 
 var mediaPlayer: MediaPlayer? = null
+var isReady: Boolean = false
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,9 +80,11 @@ class MainActivity : ComponentActivity() {
             )
             setDataSource(url)
             setOnPreparedListener {
+                isReady = true
                 it.start()
             }
             setOnErrorListener { _, _, _ ->
+                isReady = false
                 Toast.makeText(this@MainActivity, "Stream error", Toast.LENGTH_LONG).show()
                 true
             }
@@ -179,7 +188,10 @@ fun MySettingsIcon(filled: Boolean) {
 
 @Composable
 fun MyHomePage() {
-    MyVisualizer()
+    Column {
+        MyVisualizer()
+        MyPlayButton()
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -188,7 +200,7 @@ fun MyVisualizer() {
     val transition = rememberInfiniteTransition()
     val transform by animateFloatAsState(
         targetValue = if (mediaPlayer?.isPlaying ?: false) 1f else 0f,
-        animationSpec = tween(durationMillis = 1000)
+        animationSpec = tween(durationMillis = 200)
     )
     val rotation by transition.animateFloat(
         initialValue = 0f,
@@ -225,6 +237,34 @@ fun MyVisualizer() {
         shape = shape,
         color = MaterialTheme.colorScheme.primaryContainer
     ) {}
+}
+
+@Composable
+fun MyPlayButton() {
+    var isPlaying by remember { mutableStateOf(true) }
+    Button(
+        onClick = {
+            if (!isReady) {
+                return@Button
+            }
+            if (isPlaying) {
+                mediaPlayer?.pause()
+            } else {
+                mediaPlayer?.start()
+            }
+            isPlaying = !isPlaying
+        },
+    ) {
+        MyPlayIcon(isPlaying)
+    }
+}
+
+@Composable
+fun MyPlayIcon(isPlaying: Boolean) {
+    Icon(
+        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+        contentDescription = "Play"
+    )
 }
 
 @Composable
