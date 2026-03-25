@@ -7,8 +7,16 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -17,28 +25,39 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.toPath
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Size
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.Morph
 import com.example.myapplication.ui.theme.MyApplicationTheme
 
 var mediaPlayer: MediaPlayer? = null
-var mediaPlayerPrepared by mutableStateOf(false)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,11 +73,9 @@ class MainActivity : ComponentActivity() {
             )
             setDataSource(url)
             setOnPreparedListener {
-                mediaPlayerPrepared = true
                 it.start()
             }
             setOnErrorListener { _, _, _ ->
-                mediaPlayerPrepared = false
                 Toast.makeText(this@MainActivity, "Stream error", Toast.LENGTH_LONG).show()
                 true
             }
@@ -114,9 +131,7 @@ fun MyTopBar() {
             Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Launcher Foreground",
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .padding(start = 4.dp)
+                tint = Color.Unspecified
             )
         },
         title = {
@@ -164,11 +179,52 @@ fun MySettingsIcon(filled: Boolean) {
 
 @Composable
 fun MyHomePage() {
-    if (mediaPlayerPrepared) {
-        Text("Playing stream")
-    } else {
-        Text("Preparing stream")
+    MyVisualizer()
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun MyVisualizer() {
+    val transition = rememberInfiniteTransition()
+    val transform by animateFloatAsState(
+        targetValue = if (mediaPlayer?.isPlaying ?: false) 1f else 0f,
+        animationSpec = tween(durationMillis = 1000)
+    )
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+    val morph = remember {
+        Morph(MaterialShapes.Circle,
+            MaterialShapes.Cookie12Sided)
     }
+    val shape = remember(morph, transform) {
+        object : Shape {
+            override fun createOutline(
+                size: Size,
+                layoutDirection: LayoutDirection,
+                density: Density
+            ): Outline {
+                val path = morph.toPath(progress = transform)
+                val matrix = Matrix().apply {
+                    scale(size.width, size.height)
+                }
+                path.transform(matrix)
+                return Outline.Generic(path)
+            }
+        }
+    }
+    Surface(
+        modifier = Modifier
+            .size(100.dp)
+            .rotate(rotation),
+        shape = shape,
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {}
 }
 
 @Composable
