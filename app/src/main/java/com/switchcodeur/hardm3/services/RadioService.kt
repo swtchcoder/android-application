@@ -79,6 +79,9 @@ class RadioService : Service() {
     override fun onDestroy() {
         player?.release()
         wifiLock?.release()
+        player = null
+        isReady = false
+        _isPlaying = false
         super.onDestroy()
     }
 
