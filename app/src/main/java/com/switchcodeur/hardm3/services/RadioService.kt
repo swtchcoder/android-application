@@ -17,10 +17,10 @@ import androidx.core.app.NotificationCompat
 import com.switchcodeur.hardm3.R
 
 class RadioService : Service() {
-    private val url = "https://stream.hardcoreradio.nl:9000/hcr.ogg"
     private var wifiLock: WifiManager.WifiLock? = null
 
     companion object {
+        var url: String = ""
         var player: MediaPlayer? = null
         var isReady by mutableStateOf(false)
         var _isPlaying by mutableStateOf(false)
